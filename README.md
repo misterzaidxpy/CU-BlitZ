@@ -145,7 +145,11 @@ No data is collected or sent anywhere. Everything runs locally in your browser.
 
 ## Changelog
 
-### v2.1.0 (Current)
+### v2.1.1 (Current)
+- Fixed Assignment Tracker sending two requests per course (12 instead of 6 for 6 courses)
+- Updated author links to the new portfolio domain and GitHub username
+
+### v2.1.0
 - Added one-click bulk submission for teacher and course evaluations
 - Live progress bar with per-course status tracking
 - Info note for individual vs bulk submission options
@@ -163,7 +167,7 @@ No data is collected or sent anywhere. Everything runs locally in your browser.
 
 ## Feedback and Support
 
-- Email: **contact@zaid.sh**
+- Email: **contact@misterzaid.com**
 - Issues: [GitHub Issues](https://github.com/misterzaidxpy/CU-BlitZ/issues)
 - Star this repo if you find it helpful!
 

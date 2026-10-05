@@ -3,7 +3,7 @@
   "author": "Muhammad Zaid",
   "name": "CU-BlitZ",
   "description": "A feature-packed extension for CUSIT students: Auto-fill evaluations & track pending assignments",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "permissions": [
     "storage",
     "scripting"
