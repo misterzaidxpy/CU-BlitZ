@@ -136,11 +136,14 @@
     const idCol = heads.indexOf('Course ID');
     const totalCol = heads.indexOf('Total Classes');
     const presentCol = heads.indexOf('Presents');
+    // The margin column goes just before Percentage; at the end if a table has none
+    const percentCol = heads.indexOf('Percentage');
+    const insertCell = (row, cell) => row.insertBefore(cell, percentCol >= 0 ? row.cells[percentCol] || null : null);
 
     const th = document.createElement('th');
     th.textContent = '75% Margin';
     th.title = 'Classes you can miss in a row and still have at least 75% attendance';
-    headRow.appendChild(th);
+    insertCell(headRow, th);
 
     for (const row of table.rows) {
       if (row === headRow || row.cells[0]?.tagName !== 'TD' || row.cells.length <= presentCol) continue;
@@ -149,7 +152,7 @@
 
       const td = document.createElement('td');
       td.innerHTML = marginCell(margin);
-      row.appendChild(td);
+      insertCell(row, td);
     }
 
     // attendance.php already has the LMS's own 75% rule note; the dashboard does not

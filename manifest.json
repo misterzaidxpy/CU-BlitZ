@@ -57,14 +57,6 @@
       "run_at": "document_end"
     },
     {
-      "matches": [
-        "https://*.cu.edu.pk/cpanelS/index.php*",
-        "https://*.cu.edu.pk/cpanelS/"
-      ],
-      "js": ["features/gpa-calculator/content.js"],
-      "run_at": "document_end"
-    },
-    {
       "matches": ["https://*.cu.edu.pk/cpanelS/lectures.php*"],
       "js": ["features/lecture-download/content.js"],
       "run_at": "document_end"
