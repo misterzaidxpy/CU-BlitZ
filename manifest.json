@@ -46,6 +46,28 @@
       "matches": ["https://*.cu.edu.pk/cpanelS/asgupload.php*"],
       "js": ["features/assignment-tracker/content-dashboard.js"],
       "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://*.cu.edu.pk/cpanelS/index.php*",
+        "https://*.cu.edu.pk/cpanelS/",
+        "https://*.cu.edu.pk/cpanelS/attendance.php*"
+      ],
+      "js": ["features/attendance-margin/content.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://*.cu.edu.pk/cpanelS/index.php*",
+        "https://*.cu.edu.pk/cpanelS/"
+      ],
+      "js": ["features/gpa-calculator/content.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": ["https://*.cu.edu.pk/cpanelS/lectures.php*"],
+      "js": ["features/lecture-download/content.js"],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
