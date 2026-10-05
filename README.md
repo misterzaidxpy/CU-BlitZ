@@ -2,7 +2,7 @@
 
 A feature-packed Chrome Extension designed for **City University of Science and Information Technology (CUSIT)** students. It combines multiple productivity tools to streamline your university experience.
 
-**110+ active users** on the [Chrome Web Store](https://chromewebstore.google.com/).
+**150+ users** on the [Chrome Web Store](https://chromewebstore.google.com/detail/cu-blitz/lpmieknliegdccpflcpdooimjlgpceih).
 
 ---
 
@@ -43,8 +43,8 @@ CU-BlitZ/
 │   │   ├── popup.html            # Settings popup UI
 │   │   └── popup.js              # Popup logic
 │   └── assignment-tracker/
-│       ├── background.js         # Fetch and parse assignments
-│       ├── content-dashboard.js  # Inject dashboard widget
+│       ├── background.js         # Relays View All refresh requests to an open LMS tab
+│       ├── content-dashboard.js  # Fetch, parse and cache assignments; inject dashboard widget
 │       ├── injected-styles.css   # Widget styling
 │       ├── view-all.html         # Full assignments page
 │       ├── view-all.js           # View all page logic
@@ -83,13 +83,13 @@ CU-BlitZ/
 
 ### From Chrome Web Store
 
-Install directly from the [Chrome Web Store](https://chromewebstore.google.com/).
+Install directly from the [Chrome Web Store](https://chromewebstore.google.com/detail/cu-blitz/lpmieknliegdccpflcpdooimjlgpceih).
 
 ### For Development
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/zaidkx7/CU-BlitZ.git
+   git clone https://github.com/misterzaidxpy/CU-BlitZ.git
    ```
 2. Go to `chrome://extensions` in Chrome
 3. Enable **Developer Mode** (toggle in top-right)
@@ -139,7 +139,7 @@ No data is collected or sent anywhere. Everything runs locally in your browser.
 
 ## Privacy Policy
 
-[View Privacy Policy](https://zaidkx7.github.io/privacy.html)
+[View Privacy Policy](https://misterzaid.com/privacy.html)
 
 ---
 
@@ -164,7 +164,7 @@ No data is collected or sent anywhere. Everything runs locally in your browser.
 ## Feedback and Support
 
 - Email: **contact@zaid.sh**
-- Issues: [GitHub Issues](https://github.com/zaidkx7/CU-BlitZ/issues)
+- Issues: [GitHub Issues](https://github.com/misterzaidxpy/CU-BlitZ/issues)
 - Star this repo if you find it helpful!
 
 ---
