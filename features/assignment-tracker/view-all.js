@@ -76,7 +76,7 @@
 
     try {
       // Clear the cache
-      await chrome.storage.local.clear();
+      await chrome.storage.local.remove('assignmentCache');
 
       // Show loading state with progress
       showLoading('Fetching courses...');
