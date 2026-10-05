@@ -21,6 +21,24 @@ A feature-packed Chrome Extension designed for **City University of Science and 
 - **View All Page** - Comprehensive list of all pending assignments organized by course
 - **Smart Caching** - Auto-updates every hour to minimize server load
 - **Direct Links** - Jump straight to assignment or upload pages
+- **Session Expired Notice** - Tells you to log in again instead of showing an empty list
+
+### Course Announcements
+- Latest announcements from all your courses in one box on the dashboard, newest first
+- Full text and links shown inline, with a "New" label and "Mark all as read"
+
+### Attendance Margin
+- Adds a "75% Margin" column to the attendance tables on the dashboard and Attendance page
+- Shows how many classes you can miss in a row and stay at or above 75%, or how many to attend to get back to 75%
+- Counts in class hours, the same way the LMS does (a 1.5 h lecture or a 3 h lab per class, from your timetable)
+
+### GPA Calculator
+- Collapsible box under "SGPA Semester Wise": pick the grade you expect in each current course
+- Semester GPA uses the Student Handbook grading scale; credit hours come from your course pages
+- Projected CGPA starts from the official CGPA and credit hours on your latest transcript (accurate to ±0.01)
+
+### Lecture Download
+- "Download all" button on each course's Lectures page, saving every file with the course code in its name
 
 ### Privacy and Security
 - 100% local processing, no remote code execution
@@ -42,13 +60,19 @@ CU-BlitZ/
 │   │   ├── page-fetch.js         # Main-world fetch helper for bulk submissions
 │   │   ├── popup.html            # Settings popup UI
 │   │   └── popup.js              # Popup logic
-│   └── assignment-tracker/
-│       ├── background.js         # Relays View All refresh requests to an open LMS tab
-│       ├── content-dashboard.js  # Fetch, parse and cache assignments; inject dashboard widget
-│       ├── injected-styles.css   # Widget styling
-│       ├── view-all.html         # Full assignments page
-│       ├── view-all.js           # View all page logic
-│       └── view-all.css          # View all page styling
+│   ├── assignment-tracker/
+│   │   ├── background.js         # Relays View All refresh requests to an open LMS tab
+│   │   ├── content-dashboard.js  # Fetch and cache assignments and announcements; dashboard widgets
+│   │   ├── injected-styles.css   # Widget styling
+│   │   ├── view-all.html         # Full assignments page
+│   │   ├── view-all.js           # View all page logic
+│   │   └── view-all.css          # View all page styling
+│   ├── attendance-margin/
+│   │   └── content.js            # 75% Margin column on attendance tables
+│   ├── gpa-calculator/
+│   │   └── content.js            # GPA Calculator box on the dashboard
+│   └── lecture-download/
+│       └── content.js            # Download all button on lectures pages
 └── README.md
 ```
 
