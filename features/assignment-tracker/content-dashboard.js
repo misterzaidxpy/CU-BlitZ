@@ -177,9 +177,10 @@
         const session = urlParams.get('sess');
         const cpsess = urlParams.get('cpsess');
 
-        const courseKey = `${courseId}-${teacherId}`;
-        if (seenCourses.has(courseKey)) continue;
-        seenCourses.add(courseKey);
+        // Course code and title cells both link to the same outline.php URL,
+        // so key on the query string to keep only the first (course code) link
+        if (seenCourses.has(queryString)) continue;
+        seenCourses.add(queryString);
 
         const titleMatch = html.substring(match.index).match(/<\/a><\/td>\s*<td[^>]*><a[^>]*>([^<]+)<\/a>/);
         const courseTitle = titleMatch ? titleMatch[1].trim() : 'Unknown';
