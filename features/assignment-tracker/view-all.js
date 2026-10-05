@@ -3,14 +3,20 @@
 (function() {
   'use strict';
 
+  // Messages for cache.error values written by content-dashboard.js
+  const ERROR_MESSAGES = {
+    'session-expired': 'Your LMS session has expired. Log in to the LMS, open your dashboard, then click Retry.',
+    'fetch-failed': "Couldn't load your assignments because the LMS didn't respond. Click Retry to try again."
+  };
+
   // Load assignments when page loads
   document.addEventListener('DOMContentLoaded', () => {
     loadAssignments();
 
-    // Attach retry button handler
+    // Attach retry button handler (fetches fresh data, since the cached result is the error)
     const retryBtn = document.getElementById('retry-btn');
     if (retryBtn) {
-      retryBtn.addEventListener('click', loadAssignments);
+      retryBtn.addEventListener('click', refreshAssignments);
     }
 
     // Attach refresh button handler
@@ -31,6 +37,11 @@
       // If cache is suspicious (likely from expired session), auto-refresh
       if (result.assignmentCache && isCacheSuspicious(result.assignmentCache)) {
         refreshAssignments();
+        return;
+      }
+
+      if (result.assignmentCache?.error) {
+        showError(ERROR_MESSAGES[result.assignmentCache.error] || ERROR_MESSAGES['fetch-failed']);
         return;
       }
 
@@ -104,7 +115,9 @@
             resetButton();
             
             // Final display (removes loading indicator)
-            if (assignments.length === 0) {
+            if (cache.error) {
+              showError(ERROR_MESSAGES[cache.error] || ERROR_MESSAGES['fetch-failed']);
+            } else if (assignments.length === 0) {
               showEmptyState();
             } else {
               displayAssignments(assignments, false);
