@@ -6,6 +6,7 @@
 
   let widgetInjected = false;
   let isRefreshing = false;
+  let fetchInProgress = null;
 
   const CACHE_TTL = 3600000; // 1 hour in milliseconds
   // Use relative URLs to avoid CORS issues between www.cu.edu.pk and cu.edu.pk
@@ -13,6 +14,13 @@
 
   // Initialize on page load
   async function init() {
+    // On the upload page an assignment is about to be (or was just) submitted,
+    // so mark the cache stale and let the next dashboard visit refetch
+    if (window.location.pathname.endsWith('/asgupload.php')) {
+      await markCacheStale();
+      return;
+    }
+
     // Check if we're on the dashboard page
     if (!isDashboardPage()) {
       return;
@@ -90,6 +98,14 @@
     return age >= cache.ttl;
   }
 
+  // Keep cached assignments (View All still shows them) but force a refetch
+  async function markCacheStale() {
+    const cache = await getCachedAssignments();
+    if (cache) {
+      await chrome.storage.local.set({ assignmentCache: { ...cache, lastFetched: 0 } });
+    }
+  }
+
   // Check if cache is suspicious (likely from expired session)
   // Cache with 0 courses processed likely means session was invalid during fetch
   function isCacheSuspicious(cache) {
@@ -101,7 +117,18 @@
   // ========== FETCH FUNCTIONS (run in content script for cookie access) ==========
 
   // Fetch all assignments directly from content script
-  async function fetchAllAssignments() {
+  // Dashboard load, Refresh and View All can all trigger a fetch, so reuse
+  // one that is already running in this tab instead of starting another
+  function fetchAllAssignments() {
+    if (!fetchInProgress) {
+      fetchInProgress = runFetchAllAssignments().finally(() => {
+        fetchInProgress = null;
+      });
+    }
+    return fetchInProgress;
+  }
+
+  async function runFetchAllAssignments() {
     try {
       // Step 1: Fetch course list
       const courses = await fetchCourses();
@@ -159,39 +186,32 @@
   }
 
   // Parse course list from HTML
+  // Columns: Course ID | Title | Email | Section | Teacher
   function parseCourses(html) {
     const courses = [];
     const seenCourses = new Set();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
 
-    const linkPattern = /<a\s+href=['"]outline\.php\?([^'"]+)['"]\s*>([^<]+)<\/a>/gi;
+    for (const row of doc.querySelectorAll('tr')) {
+      // Course code and title cells both link to the same outline.php URL,
+      // so only read the link in the first (course code) cell
+      const link = row.cells[0]?.querySelector('a[href^="outline.php?"]');
+      if (!link) continue;
 
-    let match;
-    while ((match = linkPattern.exec(html)) !== null) {
-      const queryString = match[1];
-      const courseId = match[2].trim();
+      const queryString = link.getAttribute('href').split('?')[1];
+      if (seenCourses.has(queryString)) continue;
+      seenCourses.add(queryString);
 
-      try {
-        const urlParams = new URLSearchParams(queryString);
-        const section = urlParams.get('section') || '';
-        const teacherId = urlParams.get('teacherID');
-        const session = urlParams.get('sess');
-        const cpsess = urlParams.get('cpsess');
-
-        // Course code and title cells both link to the same outline.php URL,
-        // so key on the query string to keep only the first (course code) link
-        if (seenCourses.has(queryString)) continue;
-        seenCourses.add(queryString);
-
-        const titleMatch = html.substring(match.index).match(/<\/a><\/td>\s*<td[^>]*><a[^>]*>([^<]+)<\/a>/);
-        const courseTitle = titleMatch ? titleMatch[1].trim() : 'Unknown';
-
-        courses.push({
-          courseId, courseTitle, section, teacherId, session, cpsess,
-          shift: 'Morning'
-        });
-      } catch (err) {
-        // Skip malformed entries
-      }
+      const urlParams = new URLSearchParams(queryString);
+      courses.push({
+        courseId: link.textContent.trim(),
+        courseTitle: row.cells[1]?.textContent.trim() || 'Unknown',
+        section: urlParams.get('section') || '',
+        teacherId: urlParams.get('teacherID'),
+        session: urlParams.get('sess'),
+        cpsess: urlParams.get('cpsess'),
+        shift: 'Morning'
+      });
     }
 
     return courses;
@@ -222,64 +242,41 @@
   }
 
   // Parse assignments from HTML
+  // Columns: Asg No | Title | Description | Help File | Allow File Upload | Date Added | Last Date | Upload
+  // Each assignment row is followed by a colspan "Evaluation Remarks" row
   function parseAssignments(html, course, assignmentPageUrl) {
     const pendingAssignments = [];
-    const trPattern = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-    let rowMatch;
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const table = doc.querySelector('table.table-hover');
+    if (!table) return pendingAssignments;
 
-    while ((rowMatch = trPattern.exec(html)) !== null) {
-      const rowHtml = rowMatch[1];
+    // table.rows skips rows of tables nested inside descriptions (pasted from Word)
+    for (const row of table.rows) {
+      const cells = row.cells;
+      if (cells.length < 8 || cells[0].tagName !== 'TD') continue;
 
-      if (rowHtml.includes('colspan')) continue;
+      // Only pending assignments have an upload link
+      const uploadLink = cells[7].querySelector('a[href*="asgupload.php"]');
+      if (!uploadLink) continue;
 
-      if (rowHtml.includes('asgupload.php')) {
-        const cellPattern = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-        const cells = [];
-        let cellMatch;
+      const helpFileLink = cells[3].querySelector('a[href]');
 
-        while ((cellMatch = cellPattern.exec(rowHtml)) !== null) {
-          cells.push(cellMatch[1]);
-        }
-
-        if (cells.length < 7) continue;
-
-        const assignmentNo = extractText(cells[0]);
-        const title = extractText(cells[1]);
-        const description = cells[2];
-        const dateAdded = extractText(cells[5]);
-        const lastDate = extractText(cells[6]);
-
-        const helpFileMatch = cells[3].match(/<a\s+href=['"]([^'"]+)['"][^>]*>([^<]+)<\/a>/);
-        const helpFile = helpFileMatch ? helpFileMatch[1] : null;
-        const helpFileName = helpFileMatch ? helpFileMatch[2].trim() : null;
-
-        const uploadLinkMatch = cells[7].match(/<a\s+href=['"]([^'"]+)['"]/);
-        const uploadLink = uploadLinkMatch ? uploadLinkMatch[1] : null;
-
-        pendingAssignments.push({
-          assignmentNo, title, description, helpFile, helpFileName,
-          dateAdded, lastDate, uploadLink,
-          courseId: course.courseId,
-          courseTitle: course.courseTitle,
-          assignmentUrl: assignmentPageUrl
-        });
-      }
+      pendingAssignments.push({
+        assignmentNo: cells[0].textContent.trim(),
+        title: cells[1].textContent.trim(),
+        description: cells[2].innerHTML,
+        helpFile: helpFileLink ? helpFileLink.getAttribute('href') : null,
+        helpFileName: helpFileLink ? helpFileLink.textContent.trim() : null,
+        dateAdded: cells[5].textContent.trim(),
+        lastDate: cells[6].textContent.trim(),
+        uploadLink: uploadLink.getAttribute('href'),
+        courseId: course.courseId,
+        courseTitle: course.courseTitle,
+        assignmentUrl: assignmentPageUrl
+      });
     }
 
     return pendingAssignments;
-  }
-
-  // Helper to extract text from HTML
-  function extractText(html) {
-    if (!html) return '';
-    return html
-      .replace(/<[^>]+>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .trim();
   }
 
   // Cache assignments in chrome.storage
@@ -313,16 +310,17 @@
 
   // Display assignments (supports progressive updates)
   function displayAssignments(assignments, isLoading = false) {
-    removeLoadingWidget();
-
     if (!assignments || assignments.length === 0) {
       if (!isLoading) {
+        removeLoadingWidget();
         injectEmptyWidget();
         updateHeaderIcon(0);
       }
       return;
     }
 
+    // injectWidget reuses the existing widget box, so it stays in place
+    // across progressive updates instead of being removed and re-inserted
     injectWidget(assignments.slice(0, 5), assignments.length, isLoading);
     updateHeaderIcon(assignments.length);
   }
@@ -571,7 +569,7 @@
     }
 
     // Clear cache
-    await chrome.storage.local.clear();
+    await chrome.storage.local.remove('assignmentCache');
 
     // Remove existing widget
     widgetInjected = false;

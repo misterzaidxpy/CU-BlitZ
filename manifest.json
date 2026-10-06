@@ -41,6 +41,11 @@
       "js": ["features/assignment-tracker/content-dashboard.js"],
       "css": ["features/assignment-tracker/injected-styles.css"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["https://*.cu.edu.pk/cpanelS/asgupload.php*"],
+      "js": ["features/assignment-tracker/content-dashboard.js"],
+      "run_at": "document_end"
     }
   ],
   "web_accessible_resources": [
