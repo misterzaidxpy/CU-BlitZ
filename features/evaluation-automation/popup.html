@@ -1,83 +1,327 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AutoFill</title>
+  <title>CU-BlitZ</title>
   <style>
+    @font-face {
+      font-family: "Archivo Narrow";
+      src: url("fonts/archivo-narrow-700.woff2") format("woff2");
+      font-weight: 700;
+    }
+    @font-face {
+      font-family: "Archivo";
+      src: url("fonts/archivo-400.woff2") format("woff2");
+      font-weight: 400;
+    }
+    @font-face {
+      font-family: "Archivo";
+      src: url("fonts/archivo-600.woff2") format("woff2");
+      font-weight: 600;
+    }
+    @font-face {
+      font-family: "IBM Plex Mono";
+      src: url("fonts/ibm-plex-mono-500.woff2") format("woff2");
+      font-weight: 500;
+    }
+
+    /* Answer sheet tokens in the LMS blues: printed blue ink on cool white,
+       filled in with the navy of the LMS sidebar */
+    :root {
+      --sheet: #F5F8FB;
+      --ink: #1060A5;
+      --ink-soft: #E1ECF6;
+      --pencil: #1D2733;
+      --pencil-muted: #5D6B7A;
+      --fill: #0B4F77;
+      --on-fill: #F5F8FB;
+      --alert: #C23A2B;
+      --font-display: "Archivo Narrow", "Arial Narrow", sans-serif;
+      --font-body: "Archivo", "Segoe UI", sans-serif;
+      --font-label: "IBM Plex Mono", Consolas, monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --sheet: #0E1A24;
+        --ink: #5AA9DA;
+        --ink-soft: #16324A;
+        --pencil: #E6EDF3;
+        --pencil-muted: #8FA1B3;
+        --fill: #8CC4E8;
+        --on-fill: #0E1A24;
+        --alert: #F07167;
+      }
+    }
+
+    * { box-sizing: border-box; }
+
     body {
       margin: 0;
-      padding: 16px;
-      font-family: "Segoe UI", sans-serif;
-      background-color: #1e1e2f;
-      color: #e0e0e0;
-      width: 260px;
+      width: 320px;
+      background: var(--sheet);
+      color: var(--pencil);
+      font: 400 13px/1.45 var(--font-body);
     }
-    h2 {
-      font-size: 1.2rem;
-      margin-bottom: 12px;
-      color: #ffffff;
+
+    .sheet {
+      position: relative;
+      padding: 18px 20px 14px 34px;
     }
-    label {
-      font-size: 0.9rem;
-      margin-bottom: 4px;
+
+    /* Timing track: one alignment mark beside each row, like the edge of an answer sheet */
+    .marked { position: relative; }
+    .marked::before {
+      content: "";
+      position: absolute;
+      left: -24px;
+      top: 4px;
+      width: 12px;
+      height: 6px;
+      background: var(--fill);
+    }
+
+    /* Header */
+    .head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      padding-bottom: 10px;
+      border-bottom: 3px double var(--ink);
+    }
+    .wordmark {
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font: 700 22px/1 var(--font-display);
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+    .wordmark svg { width: 12px; height: 18px; fill: var(--ink); }
+    .version {
+      font: 500 10px/1 var(--font-label);
+      color: var(--ink);
+    }
+    .subtitle {
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: var(--pencil-muted);
+    }
+
+    /* Fields */
+    .field {
+      margin: 16px 0 0;
+      padding: 0;
+      border: 0;
+      min-width: 0;
+    }
+    .label {
       display: block;
-      color: #c0c0c0;
+      padding: 0;
+      margin-bottom: 10px;
+      font: 500 10px/1.6 var(--font-label);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--ink);
     }
-    select, input[type="text"] {
-      width: 95%;
-      padding: 8px;
-      margin-bottom: 16px;
-      border: 1px solid #555;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      background-color: #2c2c3c;
-      color: #e0e0e0;
+    .label span { color: var(--pencil-muted); letter-spacing: 0.04em; text-transform: none; }
+
+    /* Rating bubbles */
+    .bubbles {
+      display: flex;
+      justify-content: space-between;
     }
-    select:focus, input[type="text"]:focus {
-      outline: none;
-      border-color: #3f8cff;
-      box-shadow: 0 0 4px #3f8cff55;
-    }
-    button {
-      background-color: #3f8cff;
-      color: white;
-      border: none;
+    .option { position: relative; cursor: pointer; }
+    .option input {
+      position: absolute;
+      opacity: 0;
       width: 100%;
-      padding: 10px;
-      font-size: 0.95rem;
-      border-radius: 6px;
+      height: 100%;
+      margin: 0;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #2b6fd8;
+    .bubble {
+      position: relative;
+      display: grid;
+      place-items: center;
+      width: 40px;
+      height: 40px;
+      border: 1.5px solid var(--ink);
+      border-radius: 50%;
+      overflow: hidden;
+      font: 500 11px/1 var(--font-label);
+      color: var(--ink);
+      transition: background-color 120ms ease;
     }
-    .footer {
-      margin-top: 12px;
-      text-align: center;
-      font-size: 0.75rem;
-      color: #888;
+    .option:hover .bubble { background: var(--ink-soft); }
+    .option input:focus-visible + .bubble {
+      outline: 2px solid var(--ink);
+      outline-offset: 3px;
+    }
+
+    /* Pencil shading: a scribble stroke drawn inside the bubble when chosen */
+    .scribble {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      fill: none;
+      stroke: var(--fill);
+      stroke-width: 10;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 300;
+      stroke-dashoffset: 300;
+    }
+    .option input:checked + .bubble .scribble {
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 420ms cubic-bezier(0.3, 0.7, 0.4, 1);
+    }
+    .option input:checked + .bubble { color: var(--on-fill); }
+
+    .choice {
+      margin: 10px 0 0;
+      min-height: 19px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .choice.is-preview { color: var(--pencil-muted); font-weight: 400; }
+
+    /* Comment on ruled writing lines */
+    .comment {
+      display: block;
+      width: 100%;
+      margin: 0;
+      padding: 0 2px;
+      border: 0;
+      resize: none;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          transparent 0,
+          transparent 25px,
+          var(--ink) 25px,
+          var(--ink) 26px
+        );
+      color: var(--pencil);
+      font: 400 14px/26px var(--font-body);
+      caret-color: var(--ink);
+    }
+    .comment::placeholder { color: var(--pencil-muted); }
+    .comment:focus { outline: none; background-color: var(--ink-soft); }
+
+    /* Action */
+    .actions { margin-top: 18px; }
+    .save {
+      width: 100%;
+      height: 42px;
+      border: 0;
+      border-radius: 3px;
+      background: var(--fill);
+      color: var(--on-fill);
+      font: 600 14px/1 var(--font-body);
+      cursor: pointer;
+      transition: transform 120ms ease, box-shadow 120ms ease;
+    }
+    .save:hover { box-shadow: 0 3px 0 var(--ink); transform: translateY(-1px); }
+    .save:active { box-shadow: none; transform: translateY(1px); }
+    .save:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+    .save:disabled { opacity: 0.6; cursor: progress; }
+
+    .status {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+      margin: 10px 0 0;
+      font-size: 12px;
+      color: var(--pencil-muted);
+    }
+    .dot {
+      flex: none;
+      width: 9px;
+      height: 9px;
+      margin-top: 4px;
+      border: 1.5px solid var(--pencil-muted);
+      border-radius: 50%;
+    }
+    .status.is-form .dot { background: var(--fill); border-color: var(--fill); }
+    .status.is-done { color: var(--pencil); }
+    .status.is-done .dot { background: var(--ink); border-color: var(--ink); }
+    .status.is-error { color: var(--alert); }
+    .status.is-error .dot { border-color: var(--alert); }
+
+    .foot {
+      margin-top: 16px;
+      padding-top: 8px;
+      border-top: 1px solid var(--ink);
+      font: 500 10px/1.4 var(--font-label);
+      color: var(--pencil-muted);
+    }
+    .foot a { color: var(--pencil); text-decoration: none; border-bottom: 1px solid var(--ink); }
+    .foot a:hover { color: var(--ink); }
+    .foot a:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .option input:checked + .bubble .scribble { transition: none; }
+      .save, .bubble { transition: none; }
     }
   </style>
 </head>
 <body>
-  <h2>AutoFill Preferences</h2>
+  <form class="sheet" id="answer-sheet" novalidate>
+    <header class="head marked">
+      <h1 class="wordmark">
+        CU-BlitZ
+        <svg viewBox="0 0 12 18" aria-hidden="true"><path d="M7.5 0 0 10.2h4.6L3.6 18 12 6.9H7.1L7.5 0Z"/></svg>
+      </h1>
+      <span class="version" id="version"></span>
+    </header>
+    <p class="subtitle">Your answer for every evaluation form</p>
 
-  <label for="rating">Select Rating</label>
-  <select id="rating" style="width: 100%;">
-    <option value="Strongly Agree">Strongly Agree</option>
-    <option value="Agree">Agree</option>
-    <option value="Uncertain">Uncertain</option>
-    <option value="Disagree">Disagree</option>
-    <option value="Strongly Disagree">Strongly Disagree</option>
-  </select>
+    <fieldset class="field marked">
+      <legend class="label">Rating <span>· every question</span></legend>
+      <div class="bubbles" id="bubbles">
+        <label class="option" title="Strongly agree">
+          <input type="radio" name="rating" value="Strongly Agree" data-label="Strongly agree" />
+          <span class="bubble">SA<svg class="scribble" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11 29 5 5 18 35 10 5 25 35 17 6 32 34 24 12 37 30 33"/></svg></span>
+        </label>
+        <label class="option" title="Agree">
+          <input type="radio" name="rating" value="Agree" data-label="Agree" />
+          <span class="bubble">A<svg class="scribble" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11 29 5 5 18 35 10 5 25 35 17 6 32 34 24 12 37 30 33"/></svg></span>
+        </label>
+        <label class="option" title="Uncertain">
+          <input type="radio" name="rating" value="Uncertain" data-label="Uncertain" />
+          <span class="bubble">U<svg class="scribble" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11 29 5 5 18 35 10 5 25 35 17 6 32 34 24 12 37 30 33"/></svg></span>
+        </label>
+        <label class="option" title="Disagree">
+          <input type="radio" name="rating" value="Disagree" data-label="Disagree" />
+          <span class="bubble">D<svg class="scribble" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11 29 5 5 18 35 10 5 25 35 17 6 32 34 24 12 37 30 33"/></svg></span>
+        </label>
+        <label class="option" title="Strongly disagree">
+          <input type="radio" name="rating" value="Strongly Disagree" data-label="Strongly disagree" />
+          <span class="bubble">SD<svg class="scribble" viewBox="0 0 40 40" aria-hidden="true"><path d="M8 11 29 5 5 18 35 10 5 25 35 17 6 32 34 24 12 37 30 33"/></svg></span>
+        </label>
+      </div>
+      <p class="choice" id="choice" aria-live="polite"></p>
+    </fieldset>
 
-  <label for="comment">Comment</label>
-  <input type="text" id="comment" placeholder="Enter your feedback..." />
+    <div class="field marked">
+      <label class="label" for="comment">Comment <span>· every comment box</span></label>
+      <textarea class="comment" id="comment" rows="3" placeholder="Write the comment you want on each form"></textarea>
+    </div>
 
-  <button id="save">Save & Auto-Fill</button>
+    <div class="actions marked">
+      <button class="save" id="save" type="submit">Save</button>
+      <p class="status" id="status" role="status">
+        <span class="dot" aria-hidden="true"></span>
+        <span id="status-text">Checking this tab…</span>
+      </p>
+    </div>
 
-  <div class="footer">Created by <a href="https://misterzaid.com/" target="_blank" style="color: #3f8cff; text-decoration: none;">Muhammad Zaid</a> 😉👻</div>
+    <footer class="foot">
+      Made by <a href="https://misterzaid.com/" target="_blank" rel="noopener">Muhammad Zaid</a>
+    </footer>
+  </form>
 
   <script src="popup.js"></script>
 </body>
