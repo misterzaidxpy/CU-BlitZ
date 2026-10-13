@@ -145,7 +145,13 @@ No data is collected or sent anywhere. Everything runs locally in your browser.
 
 ## Changelog
 
-### v2.1.1 (Current)
+### v2.2.0 (Current)
+- Redesigned the popup as an answer sheet in the LMS colors, with light and dark mode
+- Popup now loads your saved rating and comment, detects evaluation pages, and shows how many questions and comment boxes it filled
+- Fixed Assignment Tracker missing assignments whose description contains a table pasted from Word
+- Assignment Tracker no longer starts overlapping fetches, keeps the widget in place while loading, and refreshes after you open an upload page
+
+### v2.1.1
 - Fixed Assignment Tracker sending two requests per course (12 instead of 6 for 6 courses)
 - Updated author links to the new portfolio domain and GitHub username
 
